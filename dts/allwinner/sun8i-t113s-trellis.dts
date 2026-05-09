@@ -163,6 +163,7 @@
 	uart2_pd_pins: uart2-pd-pins {
 		pins = "PD1", "PD2";
 		function = "uart2";
+		bias-pull-up;
 	};
 };
 
