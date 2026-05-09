@@ -19,7 +19,7 @@
 
 	aliases {
 		serial0 = &uart0;
-		serial2 = &uart2;
+		// serial2 = &uart2;
 		serial4 = &uart4;
 	};
 
@@ -163,7 +163,6 @@
 	uart2_pd_pins: uart2-pd-pins {
 		pins = "PD1", "PD2";
 		function = "uart2";
-		bias-pull-up;
 	};
 };
 
@@ -254,7 +253,7 @@
 &uart2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart2_pd_pins>;
-	status = "okay";
+	status = "disabled";
 };
 
 &i2c0 {
