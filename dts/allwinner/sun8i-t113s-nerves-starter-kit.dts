@@ -164,6 +164,41 @@
 		pins = "PD1", "PD2";
 		function = "uart2";
 	};
+
+	/*
+	 * The Beam Bots add-on board reaches the SoC entirely through the
+	 * 14 pin GPIO header, which carries PE2, PE3, PE5, PE8, PE9, PE10
+	 * and PE13.
+	 */
+	i2c0_pe_pins: i2c0-pe-pins {
+		pins = "PE2", "PE3";
+		function = "i2c0";
+	};
+
+	ledc_pe_pins: ledc-pe-pins {
+		pins = "PE5";
+		function = "ledc";
+	};
+
+	pwm2_pe_pin: pwm2-pe-pin {
+		pins = "PE8";
+		function = "pwm2";
+	};
+
+	pwm3_pe_pin: pwm3-pe-pin {
+		pins = "PE9";
+		function = "pwm3";
+	};
+
+	pwm4_pe_pin: pwm4-pe-pin {
+		pins = "PE10";
+		function = "pwm4";
+	};
+
+	pwm5_pe_pin: pwm5-pe-pin {
+		pins = "PE13";
+		function = "pwm5";
+	};
 };
 
 /* shell */
@@ -240,8 +275,67 @@
 	status = "okay";
 };
 
+/* Motor drivers on the add-on board. */
 &pwm {
-    status = "disabled";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pwm2_pe_pin>, <&pwm3_pe_pin>, <&pwm4_pe_pin>, <&pwm5_pe_pin>;
+	status = "okay";
+};
+
+/*
+ * NeoPixels on the add-on board.
+ *
+ * 6.18 carries the LEDC driver and its clock and reset constants, but not the
+ * device tree node — that landed upstream afterwards. Declaring it here rather
+ * than patching the kernel keeps a device tree change to a device tree
+ * rebuild. Drop this in favour of the label once the kernel has caught up.
+ */
+&{/soc} {
+	ledc: led-controller@2008000 {
+		compatible = "allwinner,sun20i-d1-ledc",
+			     "allwinner,sun50i-a100-ledc";
+		reg = <0x2008000 0x400>;
+		interrupts = <SOC_PERIPHERAL_IRQ(20) IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&ccu CLK_BUS_LEDC>, <&ccu CLK_LEDC>;
+		clock-names = "bus", "mod";
+		resets = <&ccu RST_BUS_LEDC>;
+		dmas = <&dma 42>;
+		dma-names = "tx";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&ledc_pe_pins>;
+		status = "okay";
+
+		multi-led@0 {
+			reg = <0x0>;
+			color = <LED_COLOR_ID_RGB>;
+			function = LED_FUNCTION_INDICATOR;
+			function-enumerator = <0>;
+		};
+
+		multi-led@1 {
+			reg = <0x1>;
+			color = <LED_COLOR_ID_RGB>;
+			function = LED_FUNCTION_INDICATOR;
+			function-enumerator = <1>;
+		};
+
+		multi-led@2 {
+			reg = <0x2>;
+			color = <LED_COLOR_ID_RGB>;
+			function = LED_FUNCTION_INDICATOR;
+			function-enumerator = <2>;
+		};
+
+		multi-led@3 {
+			reg = <0x3>;
+			color = <LED_COLOR_ID_RGB>;
+			function = LED_FUNCTION_INDICATOR;
+			function-enumerator = <3>;
+		};
+	};
 };
 
 &uart0 {
@@ -256,9 +350,16 @@
 	status = "okay";
 };
 
+/*
+ * The onboard sensors sit on PB2/PB3 and the add-on board's IMU on PE2/PE3.
+ * Both pin pairs only offer i2c0, so the controller is muxed onto both and the
+ * two halves become one bus. They are open drain and every device has its own
+ * address, so they coexist; the cost is the extra bus capacitance and a second
+ * pair of pull-ups.
+ */
 &i2c0 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&i2c0_pb_pins>;
+	pinctrl-0 = <&i2c0_pb_pins>, <&i2c0_pe_pins>;
 	status = "okay";
 };
 
